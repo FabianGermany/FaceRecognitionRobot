@@ -33,7 +33,7 @@ mtcnn = MTCNN(
     device=device
 )
 
-checkpoint = torch.load(r'.\save\model.pt')
+checkpoint = torch.load(r'save\model.pt')
 
 #Define Inception Resnet V1 module
 #Set classify=True for pretrained classifier. For this example, we will use the model to output embeddings/CNN features. Note that for inference, it is important to set the model to eval mode.
@@ -48,7 +48,7 @@ num_classes = checkpoint['num_classes']
 def collate_fn(x):
     return x[0]
 
-dataset = datasets.ImageFolder(r'.\data\test_images')
+dataset = datasets.ImageFolder(r'data\test_images')
 dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
 loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 

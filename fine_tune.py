@@ -11,7 +11,7 @@ import os
 
 # Define run parameters
 # The dataset should follow the VGGFace2/ImageNet-style directory layout. Modify data_dir to the location of the dataset on wish to finetune on.
-data_dir = r'.\data\test_images'
+data_dir = r'data\test_images'
 
 batch_size = 32
 epochs = 8
@@ -110,7 +110,7 @@ training.pass_epoch(
     writer=writer
 )
 
-PATH = r'.\save\model.pt'
+PATH = r'save\model.pt'
 
 for epoch in range(epochs):
     print('\nEpoch {}/{}'.format(epoch + 1, epochs))
