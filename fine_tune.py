@@ -9,34 +9,36 @@ import torch.nn as nn
 import numpy as np
 import os
 
-# Define run parameters
-# The dataset should follow the VGGFace2/ImageNet-style directory layout. Modify data_dir to the location of the dataset on wish to finetune on.
-data_dir = r'data\test_images'
+
+
+#Define run parameters
+#The dataset should follow the VGGFace2/ImageNet-style directory layout. Modify data_dir to the location of the dataset on wish to finetune on.
+data_dir = r'data\finetune_img'
 
 batch_size = 32
 epochs = 8
 workers = 0 if os.name == 'nt' else 8
 
-# Determine if an nvidia GPU is available
+#Determine if an nvidia GPU is available
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print('Running on device: {}'.format(device))
 
-# Define MTCNN module
-# See help(MTCNN) for more details.
+#Define MTCNN module
+#See help(MTCNN) for more details.
 mtcnn = MTCNN(
     image_size=160, margin=0, min_face_size=20,
     thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
     device=device
 )
 
-# Perfom MTCNN facial detection
-# Iterate through the DataLoader object and obtain cropped faces.
+#Perfom MTCNN facial detection
+#Iterate through the DataLoader object and obtain cropped faces.
 dataset = datasets.ImageFolder(data_dir, transform=transforms.Resize((512, 512)))
 dataset.samples = [
     (p, p.replace(data_dir, data_dir + '_cropped'))
-    for p, _ in dataset.samples
+        for p, _ in dataset.samples
 ]
-
+        
 loader = DataLoader(
     dataset,
     num_workers=workers,
@@ -47,12 +49,13 @@ loader = DataLoader(
 for i, (x, y) in enumerate(loader):
     mtcnn(x, save_path=y)
     print('\rBatch {} of {}'.format(i + 1, len(loader)), end='')
-
+    
 # Remove mtcnn to reduce GPU memory usage
 del mtcnn
 
-# Define Inception Resnet V1 module
-# See help(InceptionResnetV1) for more details.
+
+#Define Inception Resnet V1 module
+#See help(InceptionResnetV1) for more details.
 
 resnet = InceptionResnetV1(
     classify=True,
@@ -62,7 +65,7 @@ resnet = InceptionResnetV1(
 
 num_classes = len(dataset.class_to_idx)
 
-# Define optimizer, scheduler, dataset, and dataloader
+#Define optimizer, scheduler, dataset, and dataloader
 optimizer = optim.Adam(resnet.parameters(), lr=0.001)
 scheduler = MultiStepLR(optimizer, [5, 10])
 
@@ -90,15 +93,16 @@ val_loader = DataLoader(
     sampler=SubsetRandomSampler(val_inds)
 )
 
-# Define loss and evaluation functions
+#Define loss and evaluation functions
 loss_fn = torch.nn.CrossEntropyLoss()
 metrics = {
     'fps': training.BatchTimer(),
     'acc': training.accuracy
 }
 
-# Train model
-writer = SummaryWriter(r'.\tensorboard')
+
+#Train model
+writer = SummaryWriter(r'FaceRecognitionRobot\tensorboard')
 writer.iteration, writer.interval = 0, 10
 
 print('\n\nInitial')
@@ -131,10 +135,10 @@ for epoch in range(epochs):
     )
 
     torch.save({
-        'epoch': epoch,
-        'model_state_dict': resnet.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-        'num_classes': num_classes
-    }, PATH)
+                'epoch': epoch,
+                'model_state_dict': resnet.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'num_classes': num_classes
+                }, PATH)
 
 writer.close()
