@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import os
 import cv2 as cv
+from matplotlib import pyplot as plt
 
 #own python stuff
 from dataconverter import convert_absolute_to_relative, convert_relative_to_class
@@ -91,8 +92,23 @@ elif mode == "livevideo":
             if x_aligned is not None:
                 print('Face detected with probability: {:8f}'.format(prob))
 
-            #todo draw bounding boxes,
+            # todo draw bounding boxes,
             # todo workers etc.
+
+            # detect faces
+            boxes, probs, landmarks = mtcnn.detect(frame, landmarks=True)
+
+            # visualize
+            # plt.subplot() is a function that returns a tuple containing a figure and axes objects
+            # use fig to change figure-level attributes or save figure as an image file later (fig.savefig('filename.png')
+            fig, ax = plt.subplots(figsize=(16, 12))
+            ax.imshow(frame)
+            ax.axis('off')
+
+            for box, landmark in zip(boxes, landmarks):
+                ax.scatter(*np.meshgrid(box[[0, 2]], box[[1, 3]]))
+                ax.scatter(landmark[:, 0], landmark[:, 1], s=8)
+            fig.show()
 
 
     # When everything done, release the capture
