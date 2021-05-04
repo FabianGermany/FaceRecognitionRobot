@@ -17,6 +17,7 @@ from torchvision import datasets
 import numpy as np
 import pandas as pd
 import os
+import pickle
 
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
@@ -57,7 +58,7 @@ def collate_fn(x):
 
 #Load test data
 #if mode == "singleimages":
-dataset = datasets.ImageFolder(r'data\test_images')
+dataset = datasets.ImageFolder(r'images_to_detect')
 dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
 loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 
@@ -117,14 +118,17 @@ elif mode == "livevideo"
 #Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
 #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
 aligned = []
-names = []
+unknown_person_name = []
 for x, y in loader:
     x_aligned, prob = mtcnn(x, return_prob=True)
     if x_aligned is not None:
         print('Face detected with probability: {:8f}'.format(prob))
         aligned.append(x_aligned)
-        names.append(dataset.idx_to_class[y])
+        unknown_person_name.append(dataset.idx_to_class[y])
 
+know_persons_names_path = r'embeddings\names.txt'
+with open(know_persons_names_path, 'rb') as file:
+    know_persons = pickle.load(file)
 #Calculate image embeddings
 #MTCNN will return images of faces all the same size,
 # enabling easy batch processing with the Resnet
@@ -136,17 +140,20 @@ for x, y in loader:
 # from embedding or classification (using InceptionResnetV1), as calculation of cropped faces or bounding boxes
 # can then be performed a single time and detected faces saved for future use.
 aligned = torch.stack(aligned).to(device)
-embeddings = resnet(aligned).detach().cpu()
+unknown_embedding = resnet(aligned).detach().cpu()
+learned_embeddings = torch.load('embeddings\embeddings.pt')
 
 #Print distance matrix for classes
-dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
+dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
+
+#dists = [[(e1 - e2).norm().item() for e2 in embedding] for e1 in embedding]
 #Debugger:
 #dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
 #dists = np.array(dists)
 #dists
 #formt ein numpyarray der Ergebnisse
 
-df = pd.DataFrame(dists, columns=names, index=names)
+df = pd.DataFrame(dists, columns=unknown_person_name, index=know_persons)
 print(df)
 
 #df_relative = df.applymap(convert_absolute_to_relative)
@@ -158,7 +165,7 @@ print(df)
 #another conversion function for converting the relative numbers into similarity values:
 
 #unique_names = list(dataset.class_to_idx.keys())
-df = df.replace(0, np.nan)
-best_match = df.idxmin(axis=1)
-print("Best matches for each row")
+
+best_match = df.idxmin()
+print("\n---------- Best match:  \n")
 print(best_match)
