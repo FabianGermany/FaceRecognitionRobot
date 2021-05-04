@@ -19,6 +19,7 @@ import pandas as pd
 import os
 import pickle
 import cv2 as cv
+import time
 
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
@@ -70,94 +71,94 @@ if not cap.isOpened():
     print("Cannot open camera")
     exit()
 while True:
-    counter = counter + 1;
-    if ((counter%200)==0):
-        print(counter)
-        # Capture frame-by-frame
-        ret, frame = cap.read()
 
-        # if frame is read correctly ret is True
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
+    time.sleep(1)
 
-        # Display the resulting frame
-        cv.imshow('frame', frame)
-        if cv.waitKey(1) == ord('q'):
-            break
-        
-        imgcounter = 0
-        cv.imwrite(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter, frame)
-        dataset = datasets.ImageFolder(r'images_to_detect')
-        dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
-        loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
-        imgcounter += 1
+    # Capture frame-by-frame
+    ret, frame = cap.read()
 
-        #Perfom MTCNN facial detection
-        #Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
-        #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
-        aligned = []
-        unknown_person_name = []
-        for x, y in loader:
-            x_aligned, prob = mtcnn(x, return_prob=True)
-            if x_aligned is not None:
-                print('Face detected with probability: {:8f}'.format(prob))
-                aligned.append(x_aligned)
-                unknown_person_name.append(dataset.idx_to_class[y])
-        
-        #check if aligned is empty -> no person in frame
-        if not aligned:
-            print("no person in frame")
-            continue
-        
-        #load known persons
-        know_persons_names_path = r'embeddings\names.txt'
-        with open(know_persons_names_path, 'rb') as file:
-            know_persons = pickle.load(file)
+    # if frame is read correctly ret is True
+    if not ret:
+        print("Can't receive frame (stream end?). Exiting ...")
+        break
 
-        #Calculate image embeddings
-        #MTCNN will return images of faces all the same size,
-        # enabling easy batch processing with the Resnet
-        # recognition module. Here, since we only have a few
-        # images, we build a single batch and perform inference on it.
-        #For real datasets, code should be modified to control batch sizes
-        # being passed to the Resnet, particularly if being processed on a GPU.
-        # For repeated testing, it is best to separate face detection (using MTCNN)
-        # from embedding or classification (using InceptionResnetV1), as calculation of cropped faces or bounding boxes
-        # can then be performed a single time and detected faces saved for future use.
-        aligned = torch.stack(aligned).to(device)
-        unknown_embedding = resnet(aligned).detach().cpu()
-        learned_embeddings = torch.load('embeddings\embeddings.pt')
+    # Display the resulting frame
+    cv.imshow('frame', frame)
+    if cv.waitKey(1) == ord('q'):
+        break
+    
+    imgcounter = 0
+    cv.imwrite(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter, frame)
+    dataset = datasets.ImageFolder(r'images_to_detect')
+    dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
+    loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
+    imgcounter += 1
 
-        #Print distance matrix for classes
-        dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
+    #Perfom MTCNN facial detection
+    #Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
+    #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
+    aligned = []
+    unknown_person_name = []
+    for x, y in loader:
+        x_aligned, prob = mtcnn(x, return_prob=True)
+        if x_aligned is not None:
+            print('Face detected with probability: {:8f}'.format(prob))
+            aligned.append(x_aligned)
+            unknown_person_name.append(dataset.idx_to_class[y])
+    
+    #check if aligned is empty -> no person in frame
+    if not aligned:
+        print("no person in frame")
+        continue
+    
+    #load known persons
+    know_persons_names_path = r'embeddings\names.txt'
+    with open(know_persons_names_path, 'rb') as file:
+        know_persons = pickle.load(file)
 
-        #dists = [[(e1 - e2).norm().item() for e2 in embedding] for e1 in embedding]
-        #Debugger:
-        #dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
-        #dists = np.array(dists)
-        #dists
-        #formt ein numpyarray der Ergebnisse
+    #Calculate image embeddings
+    #MTCNN will return images of faces all the same size,
+    # enabling easy batch processing with the Resnet
+    # recognition module. Here, since we only have a few
+    # images, we build a single batch and perform inference on it.
+    #For real datasets, code should be modified to control batch sizes
+    # being passed to the Resnet, particularly if being processed on a GPU.
+    # For repeated testing, it is best to separate face detection (using MTCNN)
+    # from embedding or classification (using InceptionResnetV1), as calculation of cropped faces or bounding boxes
+    # can then be performed a single time and detected faces saved for future use.
+    aligned = torch.stack(aligned).to(device)
+    unknown_embedding = resnet(aligned).detach().cpu()
+    learned_embeddings = torch.load('embeddings\embeddings.pt')
 
-        df = pd.DataFrame(dists, columns=unknown_person_name, index=know_persons)
-        #print(df)
+    #Print distance matrix for classes
+    dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
 
-        #df_relative = df.applymap(convert_absolute_to_relative)
-        #print(df_relative)
+    #dists = [[(e1 - e2).norm().item() for e2 in embedding] for e1 in embedding]
+    #Debugger:
+    #dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
+    #dists = np.array(dists)
+    #dists
+    #formt ein numpyarray der Ergebnisse
 
-        #df_message = df_relative.applymap(convert_relative_to_class)
-        #print(df_message)
+    df = pd.DataFrame(dists, columns=unknown_person_name, index=know_persons)
+    #print(df)
 
-        #another conversion function for converting the relative numbers into similarity values:
+    #df_relative = df.applymap(convert_absolute_to_relative)
+    #print(df_relative)
 
-        #unique_names = list(dataset.class_to_idx.keys())
+    #df_message = df_relative.applymap(convert_relative_to_class)
+    #print(df_message)
 
-        best_match = df.idxmin()
-        print("\n---------- Best match:  \n")
-        print(best_match)
+    #another conversion function for converting the relative numbers into similarity values:
 
-        # todo draw bounding boxes,
-        # todo workers etc.
+    #unique_names = list(dataset.class_to_idx.keys())
+
+    best_match = df.idxmin()
+    print("\n---------- Best match:  \n")
+    print(best_match)
+
+    # todo draw bounding boxes,
+    # todo workers etc.
 
         
 cap.release()
