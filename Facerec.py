@@ -71,7 +71,7 @@ if not cap.isOpened():
     exit()
 while True:
 
-    time.sleep(1)
+    time.sleep(1) #maybe deactiviate depending on requirements
 
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -107,7 +107,7 @@ while True:
     
     #check if aligned is empty -> no person in frame
     if not aligned:
-        print("no person in frame")
+        print("no (known) person in frame")
         continue
     
     #load known persons
