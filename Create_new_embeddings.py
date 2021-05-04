@@ -35,15 +35,10 @@ mtcnn = MTCNN(
     device=device
 )
 
-#checkpoint = torch.load(r'save\model.pt')
-
 #Define Inception Resnet V1 module
 #Set classify=True for pretrained classifier. For this example, we will use the model to output embeddings/CNN features. Note that for inference, it is important to set the model to eval mode.
 #See help(InceptionResnetV1) for more details.
 resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
-#resnet.load_state_dict(checkpoint['model_state_dict'])
-#resnet.eval()
-#num_classes = checkpoint['num_classes']
 
 #Define a dataset and data loader
 #We add the idx_to_class attribute to the dataset to enable easy recoding of label indices to identity names later one.
@@ -72,12 +67,13 @@ for x, y in loader:
 savepath_names = r'embeddings\names.txt'
 with open(savepath_names, 'wb') as textfile:
     pickle.dump(names, textfile)
+
 #Calculate image embeddings
 #MTCNN will return images of faces all the same size,
 # enabling easy batch processing with the Resnet
 # recognition module. Here, since we only have a few
 # images, we build a single batch and perform inference on it.
-#For real datasets, code should be modified to control batch sizes
+# For real datasets, code should be modified to control batch sizes
 # being passed to the Resnet, particularly if being processed on a GPU.
 # For repeated testing, it is best to separate face detection (using MTCNN)
 # from embedding or classification (using InceptionResnetV1), as calculation of cropped faces or bounding boxes

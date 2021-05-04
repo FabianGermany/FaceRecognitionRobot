@@ -66,7 +66,6 @@ def collate_fn(x):
 
 
 cap = cv.VideoCapture(0)  #0 = read webcam
-counter = 0
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
@@ -163,6 +162,7 @@ while True:
         
 cap.release()
 cv.destroyAllWindows()
+
 '''
 #Perfom MTCNN facial detection
 #Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
