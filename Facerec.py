@@ -1,15 +1,11 @@
 """
-Face detection and recognition inference pipeline
-
-The following example illustrates how to use the facenet_pytorch python package to perform face detection and recogition on an image dataset using an Inception Resnet V1 pretrained on the VGGFace2 dataset.
-
-The following Pytorch methods are included:
-
-    Datasets
-    Dataloaders
-    GPU/CPU processing
+Face detection and recognition
+Based on facenet_pytorch python package, MTCNN
+Inception Resnet V1 pretrained on the VGGFace2 dataset
+This project is developed by Kai Mueller, Fabian Luettel and Pauline Weimann
 """
 
+#Import packages
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
 from torch.utils.data import DataLoader
@@ -35,8 +31,6 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print('Running on device: {}'.format(device))
 
 #Define MTCNN module
-#Default params shown for illustration, but not needed. Note that, since MTCNN is a collection of neural nets and other code, the device must be passed in the following way to enable copying of objects when needed internally.
-#See help(MTCNN) for more details.
 mtcnn = MTCNN(
     image_size=160, margin=0, min_face_size=20,
     thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
@@ -65,7 +59,7 @@ def collate_fn(x):
 #loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 
 
-cap = cv.VideoCapture(0)  #0 = read webcam
+cap = cv.VideoCapture(0)  #0 = read webcam instead of read video file
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
@@ -94,8 +88,10 @@ while True:
     imgcounter += 1
 
     #Perfom MTCNN facial detection
-    #Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
-    #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
+    #Iterate through the DataLoader object and detect faces and associated detection probabilities for each.
+    #The MTCNN forward method returns images cropped to the detected face, if a face was detected.
+    #By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
+    #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function.
     aligned = []
     unknown_person_name = []
     for x, y in loader:
@@ -107,7 +103,7 @@ while True:
     
     #check if aligned is empty -> no person in frame
     if not aligned:
-        print("no (known) person in frame")
+        print("There is no (known) person in frame")
         continue
     
     #load known persons
