@@ -128,13 +128,6 @@ while True:
     #Print distance matrix for classes
     dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
 
-    #dists = [[(e1 - e2).norm().item() for e2 in embedding] for e1 in embedding]
-    #Debugger:
-    #dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
-    #dists = np.array(dists)
-    #dists
-    #formt ein numpyarray der Ergebnisse
-
     df = pd.DataFrame(dists, columns=unknown_person_name, index=know_persons)
     #print(df)
 
@@ -155,7 +148,6 @@ while True:
     # todo draw bounding boxes,
     # todo workers etc.
 
-        
 cap.release()
 cv.destroyAllWindows()
 
