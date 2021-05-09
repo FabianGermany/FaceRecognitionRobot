@@ -16,6 +16,7 @@ import os
 import pickle
 import cv2 as cv
 import time
+from deepface import DeepFace
 
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
@@ -81,11 +82,10 @@ while True:
         break
     
     imgcounter = 0
-    cv.imwrite(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter, frame)
+    cv.imwrite(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter, frame) #save as image file
     dataset = datasets.ImageFolder(r'images_to_detect')
     dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
     loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
-    imgcounter += 1
 
     #Perfom MTCNN facial detection
     #Iterate through the DataLoader object and detect faces and associated detection probabilities for each.
@@ -145,8 +145,40 @@ while True:
     print("\n---------- Best match:  \n")
     print(best_match)
 
+    # detect emotion and other parameters
+    img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter)
+
+    emotion = img_analysis["emotion"]
+    age = img_analysis["age"]
+    gender = img_analysis["gender"]
+    ethnicity = img_analysis["race"]
+    #we also have dominant_emotion,
+
+    emotion_rounded = {k: round(v, 2) for k, v in emotion.items()}
+    ethnicity_rounded = {k: round(v, 2) for k, v in ethnicity.items()}
+
+    print("\n-----------------  \n")
+    print("Face Analysis")
+
+    print("\nEmotion: \n")
+    print('\n'.join("{}: {} % ".format(k, v) for k, v in emotion_rounded.items()))
+
+
+    print("\nAge: ")
+    print(age)
+
+    print("\nGender: ")
+    print(gender)
+
+    print("\nEthnicity:  \n")
+    print('\n'.join("{}: {} % ".format(k, v) for k, v in ethnicity_rounded.items()))
+
+
     # todo draw bounding boxes,
     # todo workers etc.
+
+    imgcounter += 1
+
 
 cap.release()
 cv.destroyAllWindows()
