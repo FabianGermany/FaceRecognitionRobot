@@ -29,6 +29,8 @@ mode = "livevideo"
 similarity_threshold = 0.9 #if less than this, then you assume it's a match
 n_counter_face_detection = 4 #systems needs to detect a learnt person 4 times in a row for successful recognition
 n_counter_internal = 0
+name_detected_person = 'johndoe' #init name of detected person
+system_counter = 0 #number of frame in the script
 
 workers = 0 if os.name == 'nt' else 4
 
@@ -70,6 +72,7 @@ if not cap.isOpened():
     print("Cannot open camera")
     exit()
 while True:
+    system_counter = system_counter + 1 #increment frame counter
 
     time.sleep(1) #maybe deactiviate depending on requirements
 
@@ -109,6 +112,8 @@ while True:
     #check if aligned is empty -> no person in frame
     if not aligned:
         print("There is no (known) person in frame")
+        # reset counter
+        n_counter_internal = 0
         continue
     
     #load known persons
@@ -147,19 +152,21 @@ while True:
     #unique_names = list(dataset.class_to_idx.keys())
 
     best_match = df.idxmin()
-    print("\n---------- Best match:  \n")
-    print(best_match)
+    print("Best match: " + best_match.unknown_person)
+    print("\n")
 
-    #identify person if recognitoins succeeded several times
+    #identify person if recognitions succeeded several times
     #----------------------------------------------------------------
 
-    #if face is a REAL match
-    if(df.min().values[0] < similarity_threshold):
+    name_detected_person_previous = name_detected_person
+    name_detected_person = best_match.unknown_person
+
+    #if face is a REAL match AND same face like previous iteration
+    if((df.min().values[0] < similarity_threshold) and (name_detected_person_previous == name_detected_person)):
         n_counter_internal = n_counter_internal + 1
 
-
     #if face is NOT a REAL match
-    else:# (df.min().values[0] >= similarity_threshold):
+    else:# (df.min().values[0] >= similarity_threshold) OR different person:
         #reset counter
         n_counter_internal = 0
 
@@ -169,42 +176,49 @@ while True:
 
         # speech output for person recognition
         #TODO speech detection
-        print("Hey nice to see you several times")
+        print("********************")
+        print("Hey nice to see you, " + best_match.unknown_person + " !")
+        print("********************")
 
-        n_counter_internal = 0 #todo adapt that
-
-
-
-
+        #n_counter_internal = 0 #todo adapt that
 
 
-    # detect emotion and other parameters
-    img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter)
+    #Face Analysis
+    #**********************************************
+    face_analysis = True
+    if face_analysis == True:
 
-    emotion = img_analysis["emotion"]
-    age = img_analysis["age"]
-    gender = img_analysis["gender"]
-    ethnicity = img_analysis["race"]
-    #we also have dominant_emotion,
-
-    emotion_rounded = {k: round(v, 2) for k, v in emotion.items()}
-    ethnicity_rounded = {k: round(v, 2) for k, v in ethnicity.items()}
-
-    print("\n-----------------  \n")
-    print("Face Analysis")
-
-    print("\nEmotion: \n")
-    print('\n'.join("{}: {} % ".format(k, v) for k, v in emotion_rounded.items()))
+        #dont do this every frame cause thats wasting a lot of resources
+        if((system_counter % 5) == 0): #only do every 5th time etc.
 
 
-    print("\nAge: ")
-    print(age)
+            # detect emotion and other parameters
+            img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter)
 
-    print("\nGender: ")
-    print(gender)
+            emotion = img_analysis["emotion"]
+            age = img_analysis["age"]
+            gender = img_analysis["gender"]
+            ethnicity = img_analysis["race"]
+            #we also have dominant_emotion,
 
-    print("\nEthnicity:  \n")
-    print('\n'.join("{}: {} % ".format(k, v) for k, v in ethnicity_rounded.items()))
+            emotion_rounded = {k: round(v, 2) for k, v in emotion.items()}
+            ethnicity_rounded = {k: round(v, 2) for k, v in ethnicity.items()}
+
+            print("\n-----------------  \n")
+            print("Face Analysis")
+
+            print("\nEmotion: \n")
+            print('\n'.join("{}: {} % ".format(k, v) for k, v in emotion_rounded.items()))
+
+
+            print("\nAge: ")
+            print(age)
+
+            print("\nGender: ")
+            print(gender)
+
+            print("\nEthnicity:  \n")
+            print('\n'.join("{}: {} % ".format(k, v) for k, v in ethnicity_rounded.items()))
 
 
     # todo draw bounding boxes,
