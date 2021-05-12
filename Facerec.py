@@ -17,6 +17,8 @@ import pickle
 import cv2 as cv
 import time
 from deepface import DeepFace
+import collections #for ring buffer
+
 
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
@@ -31,6 +33,14 @@ n_counter_face_detection = 4 #systems needs to detect a learnt person 4 times in
 n_counter_internal = 0
 name_detected_person = 'johndoe' #init name of detected person
 system_counter = 0 #number of frame in the script
+speech_output_face_recognition = False #init this always to False
+speech_output_emotion_detection = False #init this always to False
+
+#ring buffer for emotion detection
+emotion_ringbuffer = collections.deque(maxlen=5)
+emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #to change use: emotion_ringbuffer.append('emotion6')
+persisting_emotion = 'null'
+
 
 workers = 0 if os.name == 'nt' else 4
 
@@ -173,14 +183,7 @@ while True:
 
     #if counter is exceeded
     if(n_counter_internal == n_counter_face_detection): #== not >= otherwise he will tell use several times
-
-        # speech output for person recognition
-        #TODO speech detection
-        print("********************")
-        print("Hey nice to see you, " + best_match.unknown_person + " !")
-        print("********************")
-
-        #n_counter_internal = 0 #todo adapt that
+        speech_output_face_recognition = True
 
 
     #Face Analysis
@@ -199,7 +202,21 @@ while True:
             age = img_analysis["age"]
             gender = img_analysis["gender"]
             ethnicity = img_analysis["race"]
-            #we also have dominant_emotion,
+            dominant_emotion = img_analysis["dominant_emotion"]
+
+            emotion_ringbuffer.append(dominant_emotion) #add the dominant emotion to ringbuffer
+            if(emotion_ringbuffer.__len__() > 0):
+                #check for similarity in buffer
+                bool_equal = all(elem == emotion_ringbuffer[0] for elem in emotion_ringbuffer) #if all values are the same than the bool is set to true
+                if(bool_equal): #equal
+                    previous_persisting_emotion = persisting_emotion
+                    persisting_emotion = emotion_ringbuffer[0] #get the persisting emotion
+                    if(persisting_emotion != previous_persisting_emotion): #not same persisting emotion like last time
+                        speech_output_emotion_detection = True #activate speech output
+                else: #not equal
+                    persisting_emotion = 'null' #dont use
+
+
 
             emotion_rounded = {k: round(v, 2) for k, v in emotion.items()}
             ethnicity_rounded = {k: round(v, 2) for k, v in ethnicity.items()}
@@ -209,7 +226,7 @@ while True:
 
             print("\nEmotion: \n")
             print('\n'.join("{}: {} % ".format(k, v) for k, v in emotion_rounded.items()))
-
+            print("--> Dominant Emotion: " + dominant_emotion)
 
             print("\nAge: ")
             print(age)
@@ -220,6 +237,66 @@ while True:
             print("\nEthnicity:  \n")
             print('\n'.join("{}: {} % ".format(k, v) for k, v in ethnicity_rounded.items()))
 
+            print("\n")
+
+            #for emotion detection use ringbuffer: if emotion is same several times in a row then use that information
+
+
+
+
+
+    #if requirements is fulfilled then talk
+    if (speech_output_face_recognition == True):
+
+        # speech output for person recognition
+        # TODO speech detection
+        print("********************")
+        print("Hey nice to see you, " + best_match.unknown_person + " !") #todo call this speech_output_phrase_face_recognition
+        print("********************")
+        speech_output_face_recognition = False  # reset
+
+        # speech output for emotion detection
+
+
+    #if requirements is fulfilled then talk
+    if (speech_output_emotion_detection == True):
+        #set of emotions: angry, disgust, fear, happy, sad, surprise, neutral
+        #todo here #todo call this speech_output_phrase_face_analysis
+        if(persisting_emotion == 'angry'):
+            print("********************")
+            print("Oh, are you angry at me?")
+            print("********************")
+
+        elif(persisting_emotion == 'disgust'):
+            print("********************")
+            print("Hey, what's in your mind?")
+            print("********************")
+
+        elif(persisting_emotion == 'fear'):
+            print("********************")
+            print("Hey, what are you afraid of?")
+            print("********************")
+
+        elif(persisting_emotion == 'happy'):
+            print("********************")
+            print("You seem to be very happy today!")
+            print("********************")
+
+        elif(persisting_emotion == 'sad'):
+            print("********************")
+            print("Hey, what did happen to you?")
+            print("********************")
+
+        elif(persisting_emotion == 'surprise'):
+            print("********************")
+            print("Are you surprised?")
+            print("********************")
+
+        #else: # (persisting_emotion == 'neutral'):
+            #dont do anything
+
+        speech_output_emotion_detection = False #reset
+        emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #reset ringbuffer
 
     # todo draw bounding boxes,
 
