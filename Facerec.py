@@ -25,6 +25,11 @@ from deepface import DeepFace
 mode = "livevideo"
 #mode = "singleimages"
 
+#this is for speech output
+similarity_threshold = 0.9 #if less than this, then you assume it's a match
+n_counter_face_detection = 4 #systems needs to detect a learnt person 4 times in a row for successful recognition
+n_counter_internal = 0
+
 workers = 0 if os.name == 'nt' else 4
 
 #Determine if an nvidia GPU is available
@@ -145,6 +150,34 @@ while True:
     print("\n---------- Best match:  \n")
     print(best_match)
 
+    #identify person if recognitoins succeeded several times
+    #----------------------------------------------------------------
+
+    #if face is a REAL match
+    if(df.min().values[0] < similarity_threshold):
+        n_counter_internal = n_counter_internal + 1
+
+
+    #if face is NOT a REAL match
+    else:# (df.min().values[0] >= similarity_threshold):
+        #reset counter
+        n_counter_internal = 0
+
+
+    #if counter is exceeded
+    if(n_counter_internal == n_counter_face_detection): #== not >= otherwise he will tell use several times
+
+        # speech output for person recognition
+        #TODO speech detection
+        print("Hey nice to see you several times")
+
+        n_counter_internal = 0 #todo adapt that
+
+
+
+
+
+
     # detect emotion and other parameters
     img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter)
 
@@ -175,7 +208,6 @@ while True:
 
 
     # todo draw bounding boxes,
-    # todo workers etc.
 
     imgcounter += 1
 
