@@ -23,12 +23,12 @@ import collections #for ring buffer
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
 
-#pick mode here
-mode = "livevideo"
-#mode = "singleimages"
+CONST_BEAUTFUL_ASTERISK = 30 * "*"
+CONST_BEAUTIFUL_LINE = 30 * "-"
+
 
 #this is for speech output
-similarity_threshold = 0.9 #if less than this, then you assume it's a match
+similarity_threshold = 1.0 #if less than this, then you assume it's a match
 n_counter_face_detection = 4 #systems needs to detect a learnt person 4 times in a row for successful recognition
 n_counter_internal = 0
 name_detected_person = 'johndoe' #init name of detected person
@@ -71,7 +71,6 @@ def collate_fn(x):
     return x[0]
 
 #Load test data
-#if mode == "singleimages":
 #dataset = datasets.ImageFolder(r'images_to_detect')
 #dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
 #loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
@@ -186,7 +185,7 @@ while True:
         speech_output_face_recognition = True
 
 
-    #Face Analysis
+    #Face Analysis including Emotion Detection
     #**********************************************
     face_analysis = True
     if face_analysis == True:
@@ -203,7 +202,10 @@ while True:
             gender = img_analysis["gender"]
             ethnicity = img_analysis["race"]
             dominant_emotion = img_analysis["dominant_emotion"]
+            emotion_rounded = {k: round(v, 2) for k, v in emotion.items()}
+            ethnicity_rounded = {k: round(v, 2) for k, v in ethnicity.items()}
 
+            #check whether emotion is repetitive: use ringbuffer: if emotion is same several times in a row then use that information
             emotion_ringbuffer.append(dominant_emotion) #add the dominant emotion to ringbuffer
             if(emotion_ringbuffer.__len__() > 0):
                 #check for similarity in buffer
@@ -217,12 +219,10 @@ while True:
                     persisting_emotion = 'null' #dont use
 
 
-
-            emotion_rounded = {k: round(v, 2) for k, v in emotion.items()}
-            ethnicity_rounded = {k: round(v, 2) for k, v in ethnicity.items()}
-
-            print("\n-----------------  \n")
+            # print results
+            print(CONST_BEAUTIFUL_LINE)
             print("Face Analysis")
+            print(CONST_BEAUTIFUL_LINE)
 
             print("\nEmotion: \n")
             print('\n'.join("{}: {} % ".format(k, v) for k, v in emotion_rounded.items()))
@@ -239,7 +239,6 @@ while True:
 
             print("\n")
 
-            #for emotion detection use ringbuffer: if emotion is same several times in a row then use that information
 
 
 
@@ -250,9 +249,11 @@ while True:
 
         # speech output for person recognition
         # TODO speech detection
-        print("********************")
-        print("Hey nice to see you, " + best_match.unknown_person + " !") #todo call this speech_output_phrase_face_recognition
-        print("********************")
+        print(CONST_BEAUTFUL_ASTERISK)
+        speech_output_phrase_face_recognition = "Hey nice to see you, " + best_match.unknown_person + " !"
+        print(speech_output_phrase_face_recognition)
+        print(CONST_BEAUTFUL_ASTERISK)
+        print('\n')
         speech_output_face_recognition = False  # reset
 
         # speech output for emotion detection
@@ -261,40 +262,40 @@ while True:
     #if requirements is fulfilled then talk
     if (speech_output_emotion_detection == True):
         #set of emotions: angry, disgust, fear, happy, sad, surprise, neutral
-        #todo here #todo call this speech_output_phrase_face_analysis
         if(persisting_emotion == 'angry'):
-            print("********************")
-            print("Oh, are you angry at me?")
-            print("********************")
+            print(CONST_BEAUTFUL_ASTERISK)
+            speech_output_phrase_face_analysis = "Oh, are you angry at me?"
+            print(CONST_BEAUTFUL_ASTERISK)
 
         elif(persisting_emotion == 'disgust'):
-            print("********************")
-            print("Hey, what's in your mind?")
-            print("********************")
+            print(CONST_BEAUTFUL_ASTERISK)
+            speech_output_phrase_face_analysis = "Hey, what's in your mind?"
+            print(CONST_BEAUTFUL_ASTERISK)
 
         elif(persisting_emotion == 'fear'):
-            print("********************")
-            print("Hey, what are you afraid of?")
-            print("********************")
+            print(CONST_BEAUTFUL_ASTERISK)
+            speech_output_phrase_face_analysis = "Hey, what are you afraid of?"
+            print(CONST_BEAUTFUL_ASTERISK)
 
         elif(persisting_emotion == 'happy'):
-            print("********************")
-            print("You seem to be very happy today!")
-            print("********************")
+            print(CONST_BEAUTFUL_ASTERISK)
+            speech_output_phrase_face_analysis = "You seem to be very happy today!"
+            print(CONST_BEAUTFUL_ASTERISK)
 
         elif(persisting_emotion == 'sad'):
-            print("********************")
-            print("Hey, what did happen to you?")
-            print("********************")
+            print(CONST_BEAUTFUL_ASTERISK)
+            speech_output_phrase_face_analysis = "Hey, what did happen to you?"
+            print(CONST_BEAUTFUL_ASTERISK)
 
         elif(persisting_emotion == 'surprise'):
-            print("********************")
-            print("Are you surprised?")
-            print("********************")
+            print(CONST_BEAUTFUL_ASTERISK)
+            speech_output_phrase_face_analysis = "Are you surprised?"
+            print(CONST_BEAUTFUL_ASTERISK)
 
         #else: # (persisting_emotion == 'neutral'):
             #dont do anything
 
+        print(speech_output_phrase_face_analysis)
         speech_output_emotion_detection = False #reset
         emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #reset ringbuffer
 
