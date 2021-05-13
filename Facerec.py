@@ -126,9 +126,9 @@ while True:
         continue
     
     #load known persons
-    know_persons_names_path = r'embeddings\names.txt'
-    with open(know_persons_names_path, 'rb') as file:
-        know_persons = pickle.load(file)
+    known_persons_names_path = r'embeddings\names.txt'
+    with open(known_persons_names_path, 'rb') as file:
+        known_persons = pickle.load(file)
 
     #Calculate image embeddings
     #MTCNN will return images of faces all the same size,
@@ -147,7 +147,7 @@ while True:
     #Print distance matrix for classes
     dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
 
-    df = pd.DataFrame(dists, columns=unknown_person_name, index=know_persons)
+    df = pd.DataFrame(dists, columns=unknown_person_name, index=known_persons)
     #print(df)
 
     #df_relative = df.applymap(convert_absolute_to_relative)
