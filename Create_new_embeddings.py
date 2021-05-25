@@ -1,13 +1,7 @@
 """
 The Following File will create new Embeddings(tensors) for every picture in the test image folder
 to detect faces you can compare an embedding to all the embeddings in the embeddings folder.
-The Tensor with the samlest distance to your embedding ist the best match. 
-
-The following Pytorch methods are included:
-
-    Datasets
-    Dataloaders
-    GPU/CPU processing
+The Tensor with the smallest distance to your embedding ist the best match.
 """
 
 from facenet_pytorch import MTCNN, InceptionResnetV1
@@ -31,8 +25,12 @@ print('Running on device: {}'.format(device))
 #Default params shown for illustration, but not needed. Note that, since MTCNN is a collection of neural nets and other code, the device must be passed in the following way to enable copying of objects when needed internally.
 #See help(MTCNN) for more details.
 mtcnn = MTCNN(
-    image_size=160, margin=0, min_face_size=20,
-    thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
+    image_size=160,
+    margin=0,
+    min_face_size=20,
+    thresholds=[0.6, 0.7, 0.7],
+    factor=0.709,
+    post_process=True,
     device=device
 )
 
@@ -59,7 +57,7 @@ loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 image_counter = 0
 aligned = []
 names = []
-for x, y in loader:
+for x, y in loader: #y is class starting from 0
     image_counter = image_counter + 1
     x_aligned, prob = mtcnn(x, return_prob=True)
     if x_aligned is not None:
