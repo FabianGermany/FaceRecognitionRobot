@@ -18,6 +18,7 @@ import cv2 as cv
 import time
 from deepface import DeepFace
 import collections #for ring buffer
+import pyttsx3 #TTS; pyttsx3 version 2.6 is needed (newer might not work for windows)
 
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
@@ -33,6 +34,13 @@ name_detected_person = 'johndoe' #init name of detected person
 system_counter = 0 #number of frame in the script
 speech_output_face_recognition = False #init this always to False
 speech_output_emotion_detection = False #init this always to False
+engine = pyttsx3.init('sapi5') #TTS init
+rate = engine.getProperty('rate')   # getting details of current speaking rate
+engine.setProperty('rate', 125)     # setting up new voice rate
+volume = engine.getProperty('volume')   #getting to know current volume level (min=0 and max=1)
+engine.setProperty('volume',1.0)    # setting up volume level  between 0 and 1
+voices = engine.getProperty('voices')       #getting details of current voice
+engine.setProperty('voice', voices[1].id)  #changing index, changes voices. 0/1 for female/male
 
 #ring buffer for emotion detection
 emotion_ringbuffer = collections.deque(maxlen=5)
@@ -240,10 +248,11 @@ while True:
     if (speech_output_face_recognition == True):
 
         # speech output for person recognition
-        # TODO speech detection
         print(CONST_BEAUTFUL_ASTERISK)
         speech_output_phrase_face_recognition = "Hey nice to see you, " + best_match.unknown_person + " !"
         print(speech_output_phrase_face_recognition)
+        engine.say(speech_output_phrase_face_recognition)
+        engine.runAndWait()
         print(CONST_BEAUTFUL_ASTERISK)
         print('\n')
         speech_output_face_recognition = False  # reset
@@ -288,6 +297,7 @@ while True:
             #dont do anything
 
         print(speech_output_phrase_face_analysis)
+        engine.say(speech_output_phrase_face_analysis)
         speech_output_emotion_detection = False #reset
         emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #reset ringbuffer
 
