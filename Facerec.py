@@ -6,11 +6,10 @@ This project is developed by Kai Mueller, Fabian Luettel and Pauline Weimann
 """
 
 #Import packages
-from facenet_pytorch import MTCNN, InceptionResnetV1, extract_face
+from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets
-from PIL import Image, ImageDraw
 import numpy as np
 import pandas as pd
 import os
@@ -56,12 +55,8 @@ print('Running on device: {}'.format(device))
 
 #Define MTCNN module
 mtcnn = MTCNN(
-    image_size=160,
-    margin=0,
-    min_face_size=20,
-    thresholds=[0.6, 0.7, 0.7],
-    factor=0.709,
-    post_process=True,
+    image_size=160, margin=0, min_face_size=20,
+    thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
     device=device
 )
 
@@ -92,6 +87,7 @@ if not cap.isOpened():
     exit()
 while True:
     system_counter = system_counter + 1 #increment frame counter
+
     time.sleep(1) #maybe deactiviate depending on requirements
 
     # Capture frame-by-frame
@@ -121,23 +117,12 @@ while True:
     aligned = []
     unknown_person_name = []
     for x, y in loader:
-        x_aligned, prob = mtcnn(x, return_prob=True) # general mtcnn
+        x_aligned, prob = mtcnn(x, return_prob=True)
         if x_aligned is not None:
             print('Face detected with probability: {:8f}'.format(prob))
             aligned.append(x_aligned)
             unknown_person_name.append(dataset.idx_to_class[y])
-
-            boxes, probs, points = mtcnn.detect(x, landmarks=True)  # for bounding box (optional)
-            # draw bounding box
-            img_draw = x.copy()
-            draw = ImageDraw.Draw(img_draw)
-            for i, (box, point) in enumerate(zip(boxes, points)):
-                draw.rectangle(box.tolist(), width=5)
-                for p in point:
-                    draw.rectangle((p - 10).tolist() + (p + 10).tolist(), width=10)
-                # extract_face(x, box, save_path='detected_face_{}.png'.format(i))
-            img_draw.save('images_to_detect/unknown_person/annotated_faces.png')
-
+    
     #check if aligned is empty -> no person in frame
     if not aligned:
         print("There is no (known) person in frame")
@@ -149,7 +134,6 @@ while True:
     known_persons_names_path = r'embeddings\names.txt'
     with open(known_persons_names_path, 'rb') as file:
         known_persons = pickle.load(file)
-
 
     #Calculate image embeddings
     #MTCNN will return images of faces all the same size,
@@ -169,6 +153,15 @@ while True:
     dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
 
     df = pd.DataFrame(dists, columns=unknown_person_name, index=known_persons)
+    #print(df)
+
+    #df_relative = df.applymap(convert_absolute_to_relative)
+    #print(df_relative)
+
+    #df_message = df_relative.applymap(convert_relative_to_class)
+    #print(df_message)
+
+    #another conversion function for converting the relative numbers into similarity values:
 
     #unique_names = list(dataset.class_to_idx.keys())
 
@@ -191,9 +184,11 @@ while True:
         #reset counter
         n_counter_internal = 0
 
+
     #if counter is exceeded
     if(n_counter_internal == n_counter_face_detection): #== not >= otherwise he will tell use several times
         speech_output_face_recognition = True
+
 
     #Face Analysis including Emotion Detection
     #**********************************************
@@ -226,6 +221,7 @@ while True:
                         speech_output_emotion_detection = True #activate speech output
                 else: #not equal
                     persisting_emotion = 'null' #dont use
+
 
             # print results
             print(CONST_BEAUTIFUL_LINE)
@@ -309,5 +305,64 @@ while True:
 
     imgcounter += 1
 
+
 cap.release()
 cv.destroyAllWindows()
+
+'''
+#Perfom MTCNN facial detection
+#Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
+#To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
+aligned = []
+unknown_person_name = []
+for x, y in loader:
+    x_aligned, prob = mtcnn(x, return_prob=True)
+    if x_aligned is not None:
+        print('Face detected with probability: {:8f}'.format(prob))
+        aligned.append(x_aligned)
+        unknown_person_name.append(dataset.idx_to_class[y])
+
+know_persons_names_path = r'embeddings\names.txt'
+with open(know_persons_names_path, 'rb') as file:
+    know_persons = pickle.load(file)
+#Calculate image embeddings
+#MTCNN will return images of faces all the same size,
+# enabling easy batch processing with the Resnet
+# recognition module. Here, since we only have a few
+# images, we build a single batch and perform inference on it.
+#For real datasets, code should be modified to control batch sizes
+# being passed to the Resnet, particularly if being processed on a GPU.
+# For repeated testing, it is best to separate face detection (using MTCNN)
+# from embedding or classification (using InceptionResnetV1), as calculation of cropped faces or bounding boxes
+# can then be performed a single time and detected faces saved for future use.
+aligned = torch.stack(aligned).to(device)
+unknown_embedding = resnet(aligned).detach().cpu()
+learned_embeddings = torch.load('embeddings\embeddings.pt')
+
+#Print distance matrix for classes
+dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
+
+#dists = [[(e1 - e2).norm().item() for e2 in embedding] for e1 in embedding]
+#Debugger:
+#dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
+#dists = np.array(dists)
+#dists
+#formt ein numpyarray der Ergebnisse
+
+df = pd.DataFrame(dists, columns=unknown_person_name, index=know_persons)
+print(df)
+
+#df_relative = df.applymap(convert_absolute_to_relative)
+#print(df_relative)
+
+#df_message = df_relative.applymap(convert_relative_to_class)
+#print(df_message)
+
+#another conversion function for converting the relative numbers into similarity values:
+
+#unique_names = list(dataset.class_to_idx.keys())
+
+best_match = df.idxmin()
+print("\n---------- Best match:  \n")
+print(best_match)
+'''
