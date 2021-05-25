@@ -122,6 +122,18 @@ while True:
             print('Face detected with probability: {:8f}'.format(prob))
             aligned.append(x_aligned)
             unknown_person_name.append(dataset.idx_to_class[y])
+
+            #watch out: this leads to destructible consequences:
+            #boxes, probs, points = mtcnn.detect(x, landmarks=True)  # for bounding box (optional)
+            # draw bounding box
+            #img_draw = x.copy()
+            #draw = ImageDraw.Draw(img_draw)
+            #for i, (box, point) in enumerate(zip(boxes, points)):
+            #    draw.rectangle(box.tolist(), width=5)
+            #    for p in point:
+            #        draw.rectangle((p - 10).tolist() + (p + 10).tolist(), width=10)
+            #    # extract_face(x, box, save_path='detected_face_{}.png'.format(i))
+            #img_draw.save('images_to_detect/unknown_person/annotated_faces.png')
     
     #check if aligned is empty -> no person in frame
     if not aligned:
