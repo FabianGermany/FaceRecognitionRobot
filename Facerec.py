@@ -19,13 +19,11 @@ import time
 from deepface import DeepFace
 import collections #for ring buffer
 
-
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
 
 CONST_BEAUTFUL_ASTERISK = 30 * "*"
 CONST_BEAUTIFUL_LINE = 30 * "-"
-
 
 #this is for speech output
 similarity_threshold = 1.0 #if less than this, then you assume it's a match
@@ -40,7 +38,6 @@ speech_output_emotion_detection = False #init this always to False
 emotion_ringbuffer = collections.deque(maxlen=5)
 emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #to change use: emotion_ringbuffer.append('emotion6')
 persisting_emotion = 'null'
-
 
 workers = 0 if os.name == 'nt' else 4
 
@@ -193,7 +190,6 @@ while True:
         #dont do this every frame cause thats wasting a lot of resources
         if((system_counter % 5) == 0): #only do every 5th time etc.
 
-
             # detect emotion and other parameters
             img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter)
 
@@ -238,10 +234,6 @@ while True:
             print('\n'.join("{}: {} % ".format(k, v) for k, v in ethnicity_rounded.items()))
 
             print("\n")
-
-
-
-
 
 
     #if requirements is fulfilled then talk

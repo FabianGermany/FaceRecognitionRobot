@@ -14,6 +14,7 @@ from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets
+from torchvision.utils import save_image
 import numpy as np
 import pandas as pd
 import os
@@ -55,14 +56,18 @@ loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 #Perfom MTCNN facial detection
 #Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
 #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
+image_counter = 0
 aligned = []
 names = []
 for x, y in loader:
+    image_counter = image_counter + 1
     x_aligned, prob = mtcnn(x, return_prob=True)
     if x_aligned is not None:
         print('Face detected with probability: {:8f}'.format(prob))
         aligned.append(x_aligned)
         names.append(dataset.idx_to_class[y])
+        image_name = 'data/cropped_images/' + 'cropped_image_class' + str(y) +  '_' + str(image_counter) + '.png'
+        save_image(x_aligned, image_name) #store cropped img
 
 savepath_names = r'embeddings\names.txt'
 with open(savepath_names, 'wb') as textfile:
