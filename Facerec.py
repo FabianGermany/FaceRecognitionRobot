@@ -55,8 +55,12 @@ print('Running on device: {}'.format(device))
 
 #Define MTCNN module
 mtcnn = MTCNN(
-    image_size=160, margin=0, min_face_size=20,
-    thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
+    image_size=160, 
+    margin=0, 
+    min_face_size=20,
+    thresholds=[0.6, 0.7, 0.7], 
+    factor=0.709, 
+    post_process=False,
     device=device
 )
 
