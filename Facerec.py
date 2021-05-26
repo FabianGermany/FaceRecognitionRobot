@@ -60,7 +60,7 @@ mtcnn = MTCNN(
     min_face_size=20,
     thresholds=[0.6, 0.7, 0.7], 
     factor=0.709, 
-    post_process=False,
+    post_process=True,
     device=device
 )
 
