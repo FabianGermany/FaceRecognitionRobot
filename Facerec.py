@@ -28,9 +28,9 @@ CONST_BEAUTIFUL_LINE = 30 * "-"
 
 #this is for speech output
 similarity_threshold = 1.0 #if less than this, then you assume it's a match
-n_counter_face_detection = 4 #systems needs to detect a learnt person 4 times in a row for successful recognition
-n_counter_internal = 0
+n_counter_face_detection = 3 #systems needs to detect a learnt person 4 times in a row for successful recognition
 name_detected_person = 'johndoe' #init name of detected person
+name_detected_person_primary = 'johndoe' #init name of detected person
 system_counter = 0 #number of frame in the script
 speech_output_face_recognition = False #init this always to False
 speech_output_emotion_detection = False #init this always to False
@@ -85,13 +85,20 @@ def collate_fn(x):
 #dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
 #loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 
+#load known persons
+known_persons_names_path = r'embeddings\names.txt'
+with open(known_persons_names_path, 'rb') as file:
+    known_persons = pickle.load(file)
+    known_persons_unique = dict.fromkeys(known_persons) #each name only once; create dictionary for later usage
+    for k, v in known_persons_unique.items():
+        if v is None:
+            known_persons_unique[k] = 0 #init amount of names to 0
 
 cap = cv.VideoCapture(0)  #0 = read webcam instead of read video file
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
 while True:
-    system_counter = system_counter + 1 #increment frame counter
 
     time.sleep(1) #maybe deactiviate depending on requirements
 
@@ -124,8 +131,19 @@ while True:
     for x, y in loader:
         x_aligned, prob = mtcnn(x, return_prob=True)
         counter = 0
-        print('Face(s) detected with probability:')
+
+        # check if aligned is empty -> no person in frame
+        if x_aligned is None:
+            print("There is no (known) person in frame")
+            # reset counter
+            # n_counter_internal = 0
+            face_analysis = False #no face, then also no face analysis
+            continue
+
+        print('\n Face(s) detected with probability:')
         print(prob)
+        face_analysis = True #face detected, so do face_analysis
+
         for detected_face in x_aligned:
             if detected_face is not None:
                 list_of_aligned.append([detected_face])
@@ -143,18 +161,8 @@ while True:
             #        draw.rectangle((p - 10).tolist() + (p + 10).tolist(), width=10)
             #    # extract_face(x, box, save_path='detected_face_{}.png'.format(i))
             #img_draw.save('images_to_detect/unknown_person/annotated_faces.png')
-    
-    #check if aligned is empty -> no person in frame
-    if not list_of_aligned:
-        print("There is no (known) person in frame")
-        # reset counter
-        n_counter_internal = 0
-        continue
-    
-    #load known persons
-    known_persons_names_path = r'embeddings\names.txt'
-    with open(known_persons_names_path, 'rb') as file:
-        known_persons = pickle.load(file)
+
+
 
     #Calculate image embeddings
     #MTCNN will return images of faces all the same size,
@@ -181,36 +189,34 @@ while True:
         best_match = df.idxmin()
         #print("Best match: " + best_match.unknown_person + counter)
         print("Best match: " + best_match[0])
-        print("\n")
+
+        #for emotion detection only use the first/primary face
+        #if(counter == 0):
+        #    name_detected_person_primary_previous = name_detected_person_primary
+        #    name_detected_person_primary = best_match[0]
+
+        #increment entry in dictionary if face is detected AND if face is a REAL match
+        if (df.min().values[0] < similarity_threshold):
+            for element in known_persons_unique:
+                if (element == best_match[0]):
+                    known_persons_unique[element] += 1
+
 
     #identify person if recognitions succeeded several times
     #----------------------------------------------------------------
-
-    name_detected_person_previous = name_detected_person
-    name_detected_person = best_match[0]
-
-    #if face is a REAL match AND same face like previous iteration
-    if((df.min().values[0] < similarity_threshold) and (name_detected_person_previous == name_detected_person)):
-        n_counter_internal = n_counter_internal + 1
-
-    #if face is NOT a REAL match
-    else:# (df.min().values[0] >= similarity_threshold) OR different person:
-        #reset counter
-        n_counter_internal = 0
-
-
-    #if counter is exceeded
-    if(n_counter_internal == n_counter_face_detection): #== not >= otherwise he will tell use several times
-        speech_output_face_recognition = True
+    for element in known_persons_unique:
+        if (known_persons_unique[element] == n_counter_face_detection): #== not >= otherwise he will tell use several times
+            speech_output_face_recognition = True
+            current_element_for_speech_output = element
 
 
     #Face Analysis including Emotion Detection
     #**********************************************
-    face_analysis = True
     if face_analysis == True:
+        system_counter = system_counter + 1  # increment frame counter
 
         #dont do this every frame cause thats wasting a lot of resources
-        if((system_counter % 5) == 0): #only do every 5th time etc.
+        if((system_counter % 8) == 0): #only do every 8th time etc.
 
             # detect emotion and other parameters
             img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter)
@@ -263,7 +269,7 @@ while True:
 
         # speech output for person recognition
         print(CONST_BEAUTFUL_ASTERISK)
-        speech_output_phrase_face_recognition = "Hey nice to see you, " + best_match[0] + " !"
+        speech_output_phrase_face_recognition = "Hey nice to see you, " + current_element_for_speech_output + " !"
         print(speech_output_phrase_face_recognition)
         engine.say(speech_output_phrase_face_recognition)
         engine.runAndWait()
