@@ -1,14 +1,19 @@
 """
 The Following File will create new Embeddings(tensors) for every picture in the test image folder
 to detect faces you can compare an embedding to all the embeddings in the embeddings folder.
-The Tensor with the smallest distance to your embedding ist the best match.
+The Tensor with the samlest distance to your embedding ist the best match. 
+
+The following Pytorch methods are included:
+
+    Datasets
+    Dataloaders
+    GPU/CPU processing
 """
 
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets
-from torchvision.utils import save_image
 import numpy as np
 import pandas as pd
 import os
@@ -25,12 +30,8 @@ print('Running on device: {}'.format(device))
 #Default params shown for illustration, but not needed. Note that, since MTCNN is a collection of neural nets and other code, the device must be passed in the following way to enable copying of objects when needed internally.
 #See help(MTCNN) for more details.
 mtcnn = MTCNN(
-    image_size=160,
-    margin=0,
-    min_face_size=20,
-    thresholds=[0.6, 0.7, 0.7],
-    factor=0.709,
-    post_process=True,
+    image_size=160, margin=0, min_face_size=20,
+    thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
     device=device
 )
 
@@ -46,7 +47,7 @@ def collate_fn(x):
 
 #Load test data
 #if mode == "singleimages":
-dataset = datasets.ImageFolder(r'data\known_persons')
+dataset = datasets.ImageFolder(r'C:\Users\mailm\Google Drive\SS2021\Robocup\older_version_nurfürmich\FaceRecognitionRobot-2ab77e5b1420bef8b15f3104964902972abcf3a9\data\know_persons')
 dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
 loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 
@@ -54,18 +55,14 @@ loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 #Perfom MTCNN facial detection
 #Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
 #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
-image_counter = 0
 aligned = []
 names = []
-for x, y in loader: #y is class starting from 0
-    image_counter = image_counter + 1
+for x, y in loader:
     x_aligned, prob = mtcnn(x, return_prob=True)
     if x_aligned is not None:
         print('Face detected with probability: {:8f}'.format(prob))
         aligned.append(x_aligned)
         names.append(dataset.idx_to_class[y])
-        image_name = 'data/cropped_images/' + 'cropped_image_class' + str(y) +  '_' + str(image_counter) + '.png'
-        save_image(x_aligned, image_name) #store cropped img
 
 savepath_names = r'embeddings\names.txt'
 with open(savepath_names, 'wb') as textfile:
