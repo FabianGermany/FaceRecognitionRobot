@@ -150,19 +150,6 @@ while True:
                 unknown_person_name.append([dataset.idx_to_class[y] + "_" + str(counter)])
                 counter += 1
 
-            #watch out: this leads to destructible consequences:
-            #boxes, probs, points = mtcnn.detect(x, landmarks=True)  # for bounding box (optional)
-            # draw bounding box
-            #img_draw = x.copy()
-            #draw = ImageDraw.Draw(img_draw)
-            #for i, (box, point) in enumerate(zip(boxes, points)):
-            #    draw.rectangle(box.tolist(), width=5)
-            #    for p in point:
-            #        draw.rectangle((p - 10).tolist() + (p + 10).tolist(), width=10)
-            #    # extract_face(x, box, save_path='detected_face_{}.png'.format(i))
-            #img_draw.save('images_to_detect/unknown_person/annotated_faces.png')
-
-
 
     #Calculate image embeddings
     #MTCNN will return images of faces all the same size,
@@ -231,6 +218,9 @@ while True:
 
             #check whether emotion is repetitive: use ringbuffer: if emotion is same several times in a row then use that information
             emotion_ringbuffer.append(dominant_emotion) #add the dominant emotion to ringbuffer
+            print("Emotion Ringbuffer (just for debugging)\n")
+            print(emotion_ringbuffer)
+            print("\n")
             if(emotion_ringbuffer.__len__() > 0):
                 #check for similarity in buffer
                 bool_equal = all(elem == emotion_ringbuffer[0] for elem in emotion_ringbuffer) #if all values are the same than the bool is set to true
