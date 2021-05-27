@@ -6,7 +6,7 @@ It also features a Text-to-Speech output.
 
 
 ## Instructions
-Learning procedure: If there is are people that should be detected, simply add a new folder of their name and some pictures of them inside the folder "data/known_persons".
+Learning procedure: If there are people that should be detected, simply add a new folder of their name and some pictures of them inside the folder "data/known_persons".
 Everytime when the list of people is extended or changed, 
 run "Create_new_embeddings.py". 
 

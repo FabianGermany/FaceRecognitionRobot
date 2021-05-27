@@ -61,6 +61,7 @@ mtcnn = MTCNN(
     thresholds=[0.6, 0.7, 0.7], 
     factor=0.709, 
     post_process=True,
+    keep_all=True,
     device=device
 )
 
@@ -118,14 +119,18 @@ while True:
     #The MTCNN forward method returns images cropped to the detected face, if a face was detected.
     #By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
     #To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function.
-    aligned = []
+    list_of_aligned  = []
     unknown_person_name = []
     for x, y in loader:
         x_aligned, prob = mtcnn(x, return_prob=True)
-        if x_aligned is not None:
-            print('Face detected with probability: {:8f}'.format(prob))
-            aligned.append(x_aligned)
-            unknown_person_name.append(dataset.idx_to_class[y])
+        counter = 0
+        print('Face(s) detected with probability:')
+        print(prob)
+        for detected_face in x_aligned:
+            if detected_face is not None:
+                list_of_aligned.append([detected_face])
+                unknown_person_name.append([dataset.idx_to_class[y] + "_" + str(counter)])
+                counter += 1
 
             #watch out: this leads to destructible consequences:
             #boxes, probs, points = mtcnn.detect(x, landmarks=True)  # for bounding box (optional)
@@ -140,7 +145,7 @@ while True:
             #img_draw.save('images_to_detect/unknown_person/annotated_faces.png')
     
     #check if aligned is empty -> no person in frame
-    if not aligned:
+    if not list_of_aligned:
         print("There is no (known) person in frame")
         # reset counter
         n_counter_internal = 0
@@ -161,35 +166,28 @@ while True:
     # For repeated testing, it is best to separate face detection (using MTCNN)
     # from embedding or classification (using InceptionResnetV1), as calculation of cropped faces or bounding boxes
     # can then be performed a single time and detected faces saved for future use.
-    aligned = torch.stack(aligned).to(device)
-    unknown_embedding = resnet(aligned).detach().cpu()
-    learned_embeddings = torch.load('embeddings\embeddings.pt')
+    counter = 0
+    for face in list_of_aligned:
+        face = torch.stack(face).to(device)
+        unknown_embedding = resnet(face).detach().cpu()
+        learned_embeddings = torch.load('embeddings\embeddings.pt')
 
-    #Print distance matrix for classes
-    dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
+        #Print distance matrix for classes
+        dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
 
-    df = pd.DataFrame(dists, columns=unknown_person_name, index=known_persons)
-    #print(df)
+        df = pd.DataFrame(dists, columns=unknown_person_name[counter], index=known_persons)
+        counter += 1
 
-    #df_relative = df.applymap(convert_absolute_to_relative)
-    #print(df_relative)
-
-    #df_message = df_relative.applymap(convert_relative_to_class)
-    #print(df_message)
-
-    #another conversion function for converting the relative numbers into similarity values:
-
-    #unique_names = list(dataset.class_to_idx.keys())
-
-    best_match = df.idxmin()
-    print("Best match: " + best_match.unknown_person)
-    print("\n")
+        best_match = df.idxmin()
+        #print("Best match: " + best_match.unknown_person + counter)
+        print("Best match: " + best_match[0])
+        print("\n")
 
     #identify person if recognitions succeeded several times
     #----------------------------------------------------------------
 
     name_detected_person_previous = name_detected_person
-    name_detected_person = best_match.unknown_person
+    name_detected_person = best_match[0]
 
     #if face is a REAL match AND same face like previous iteration
     if((df.min().values[0] < similarity_threshold) and (name_detected_person_previous == name_detected_person)):
@@ -265,7 +263,7 @@ while True:
 
         # speech output for person recognition
         print(CONST_BEAUTFUL_ASTERISK)
-        speech_output_phrase_face_recognition = "Hey nice to see you, " + best_match.unknown_person + " !"
+        speech_output_phrase_face_recognition = "Hey nice to see you, " + best_match[0] + " !"
         print(speech_output_phrase_face_recognition)
         engine.say(speech_output_phrase_face_recognition)
         engine.runAndWait()
