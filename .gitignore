@@ -132,3 +132,9 @@ dmypy.json
 # Model file is too big
 /save/model.pt
 
+# Sensible data (images)
+/data/cropped_images/*
+!data/cropped_images/.gitkeep
+
+data/known_people/*
+!/data/known_people/.gitkeep
