@@ -94,21 +94,27 @@ def collate_fn(x):
 #loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 
 #load known persons
-known_persons_names_path = r'embeddings\names.txt'
-with open(known_persons_names_path, 'rb') as file:
-    known_persons = pickle.load(file)
-    known_persons_unique = dict.fromkeys(known_persons) #each name only once; create dictionary for later usage
-    for k, v in known_persons_unique.items():
+known_people_names_path = r'embeddings\names.txt'
+with open(known_people_names_path, 'rb') as file:
+    known_people = pickle.load(file)
+    known_people_unique = dict.fromkeys(known_people) #each name only once; create dictionary for later usage
+    for k, v in known_people_unique.items():
         if v is None:
-            known_persons_unique[k] = 0 #init amount of names to 0
+            known_people_unique[k] = 0 #init amount of names to 0
 
+time_of_period = 10000.0
+#time_of_period = 10.0 #for debugging 10s
+counter_era = 0 #number of frame in the script
 
 #need this later for reset parameters regularly (like every hour etc.)
 def reset_stuff():
-    threading.Timer(10000.0, reset_stuff).start()  # called regularly
-    print("Resetting values...")
-    for k, v in known_persons_unique.items():
-        known_persons_unique[k] = 0  #reset to 0
+    threading.Timer(time_of_period, reset_stuff).start()  # called regularly
+    print("Resetting values...\n")
+    global counter_era #need to say global since its a global variable outside the function
+    counter_era += 1
+    print("We are in system era " + str(counter_era))
+    for k, v in known_people_unique.items():
+        known_people_unique[k] = 0  #reset to 0
 
 
 #regularly reset stuff like the counter for face recognition (against overflow and also that people get re-greeted after some time like 1 hour
@@ -161,7 +167,7 @@ while True:
             face_analysis = False #no face, then also no face analysis
             continue
 
-        print('\n Face(s) detected with probability:')
+        print('\nFace(s) detected with probability:')
         print(prob)
         face_analysis = True #face detected, so do face_analysis
 
@@ -191,7 +197,7 @@ while True:
         #Print distance matrix for classes
         dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
 
-        df = pd.DataFrame(dists, columns=unknown_person_name[counter], index=known_persons)
+        df = pd.DataFrame(dists, columns=unknown_person_name[counter], index=known_people)
         counter += 1
 
         best_match = df.idxmin()
@@ -205,18 +211,18 @@ while True:
 
         #increment entry in dictionary if face is detected AND if face is a REAL match
         if (df.min().values[0] < similarity_threshold):
-            for element in known_persons_unique:
+            for element in known_people_unique:
                 if (element == best_match[0]):
-                    known_persons_unique[element] += 1
+                    known_people_unique[element] += 1
 
     #reset string including the name for speech output
     current_element_for_speech_output = ''
 
     #identify person if recognitions succeeded several times
     #----------------------------------------------------------------
-    for element in known_persons_unique:
-        if (known_persons_unique[element] == n_counter_face_detection): #== not >= otherwise he will tell use several times
-            known_persons_unique[element] += 1 #increment again otherwise it might stay at n_counter_face_detection multiple times!
+    for element in known_people_unique:
+        if (known_people_unique[element] == n_counter_face_detection): #== not >= otherwise he will tell use several times
+            known_people_unique[element] += 1 #increment again otherwise it might stay at n_counter_face_detection multiple times!
             speech_output_face_recognition = True
             if (current_element_for_speech_output == ''): #case distinction: because if two people triggered at the same time then only one gets greeted
                 current_element_for_speech_output = element #one / first name
@@ -286,7 +292,7 @@ while True:
 
         # speech output for person recognition
         print(CONST_BEAUTFUL_ASTERISK)
-        speech_output_phrase_face_recognition = "Hey nice to see you, " + current_element_for_speech_output + " !"
+        speech_output_phrase_face_recognition = "Hey nice to see you again, " + current_element_for_speech_output + " !"
         print(speech_output_phrase_face_recognition)
         engine.say(speech_output_phrase_face_recognition)
         engine.runAndWait()
