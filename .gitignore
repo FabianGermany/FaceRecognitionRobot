@@ -133,8 +133,10 @@ dmypy.json
 #/save/model.pt
 
 # Sensible data (images)
-#/data/cropped_images/*
-#/data/known_people/*
-data
-#!data/cropped_images/.gitkeep
-#!/data/known_people/.gitkeep
+/data/cropped_images/*
+!data/cropped_images/.gitkeep
+
+data/known_people/*
+!/data/known_people/.gitkeep
+
+#if problems: https://stackoverflow.com/questions/25436312/gitignore-not-working
