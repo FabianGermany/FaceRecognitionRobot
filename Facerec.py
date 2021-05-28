@@ -26,6 +26,7 @@ import time
 from deepface import DeepFace
 import collections #for ring buffer
 import pyttsx3 #TTS; pyttsx3 version 2.6 is needed (newer might not work for windows)
+import threading #asynchronous stuff
 
 #own python stuff
 #from dataconverter import convert_absolute_to_relative, convert_relative_to_class
@@ -100,6 +101,18 @@ with open(known_persons_names_path, 'rb') as file:
     for k, v in known_persons_unique.items():
         if v is None:
             known_persons_unique[k] = 0 #init amount of names to 0
+
+
+#need this later for reset parameters regularly (like every hour etc.)
+def reset_stuff():
+    threading.Timer(10000.0, reset_stuff).start()  # called regularly
+    print("Resetting values...")
+    for k, v in known_persons_unique.items():
+        known_persons_unique[k] = 0  #reset to 0
+
+
+#regularly reset stuff like the counter for face recognition (against overflow and also that people get re-greeted after some time like 1 hour
+reset_stuff()
 
 cap = cv.VideoCapture(0)  #0 = read webcam instead of read video file
 if not cap.isOpened():
