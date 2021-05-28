@@ -5,6 +5,13 @@ Inception Resnet V1 pretrained on the VGGFace2 dataset
 This project is developed by Kai Mueller, Fabian Luettel and Pauline Weimann
 """
 
+'''
+Luettel, Fabian
+Mueller, Kai
+Weimann, Pauline
+2021
+'''
+
 #Import packages
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
@@ -116,6 +123,7 @@ while True:
         break
     
     imgcounter = 0
+    face_analysis = False #init
     cv.imwrite(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter, frame) #save as image file
     dataset = datasets.ImageFolder(r'images_to_detect')
     dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
@@ -188,13 +196,19 @@ while True:
                 if (element == best_match[0]):
                     known_persons_unique[element] += 1
 
+    #reset string including the name for speech output
+    current_element_for_speech_output = ''
 
     #identify person if recognitions succeeded several times
     #----------------------------------------------------------------
     for element in known_persons_unique:
         if (known_persons_unique[element] == n_counter_face_detection): #== not >= otherwise he will tell use several times
+            known_persons_unique[element] += 1 #increment again otherwise it might stay at n_counter_face_detection multiple times!
             speech_output_face_recognition = True
-            current_element_for_speech_output = element
+            if (current_element_for_speech_output == ''): #case distinction: because if two people triggered at the same time then only one gets greeted
+                current_element_for_speech_output = element #one / first name
+            else: #already at least one name in list
+                current_element_for_speech_output = current_element_for_speech_output + " and " + element
 
 
     #Face Analysis including Emotion Detection
@@ -254,7 +268,7 @@ while True:
             print("\n")
 
 
-    #if requirements is fulfilled then talk
+    #if requirements are fulfilled then talk
     if (speech_output_face_recognition == True):
 
         # speech output for person recognition
@@ -311,68 +325,8 @@ while True:
         speech_output_emotion_detection = False #reset
         emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #reset ringbuffer
 
-    # todo draw bounding boxes,
-
     imgcounter += 1
 
 
 cap.release()
 cv.destroyAllWindows()
-
-'''
-#Perfom MTCNN facial detection
-#Iterate through the DataLoader object and detect faces and associated detection probabilities for each. The MTCNN forward method returns images cropped to the detected face, if a face was detected. By default only a single detected face is returned - to have MTCNN return all detected faces, set keep_all=True when creating the MTCNN object above.
-#To obtain bounding boxes rather than cropped face images, you can instead call the lower-level mtcnn.detect() function. See help(mtcnn.detect) for details.
-aligned = []
-unknown_person_name = []
-for x, y in loader:
-    x_aligned, prob = mtcnn(x, return_prob=True)
-    if x_aligned is not None:
-        print('Face detected with probability: {:8f}'.format(prob))
-        aligned.append(x_aligned)
-        unknown_person_name.append(dataset.idx_to_class[y])
-
-know_persons_names_path = r'embeddings\names.txt'
-with open(know_persons_names_path, 'rb') as file:
-    know_persons = pickle.load(file)
-#Calculate image embeddings
-#MTCNN will return images of faces all the same size,
-# enabling easy batch processing with the Resnet
-# recognition module. Here, since we only have a few
-# images, we build a single batch and perform inference on it.
-#For real datasets, code should be modified to control batch sizes
-# being passed to the Resnet, particularly if being processed on a GPU.
-# For repeated testing, it is best to separate face detection (using MTCNN)
-# from embedding or classification (using InceptionResnetV1), as calculation of cropped faces or bounding boxes
-# can then be performed a single time and detected faces saved for future use.
-aligned = torch.stack(aligned).to(device)
-unknown_embedding = resnet(aligned).detach().cpu()
-learned_embeddings = torch.load('embeddings\embeddings.pt')
-
-#Print distance matrix for classes
-dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
-
-#dists = [[(e1 - e2).norm().item() for e2 in embedding] for e1 in embedding]
-#Debugger:
-#dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
-#dists = np.array(dists)
-#dists
-#formt ein numpyarray der Ergebnisse
-
-df = pd.DataFrame(dists, columns=unknown_person_name, index=know_persons)
-print(df)
-
-#df_relative = df.applymap(convert_absolute_to_relative)
-#print(df_relative)
-
-#df_message = df_relative.applymap(convert_relative_to_class)
-#print(df_message)
-
-#another conversion function for converting the relative numbers into similarity values:
-
-#unique_names = list(dataset.class_to_idx.keys())
-
-best_match = df.idxmin()
-print("\n---------- Best match:  \n")
-print(best_match)
-'''
