@@ -38,7 +38,7 @@ similarity_threshold = 1.0 #if less than this, then you assume it's a match
 delta_first_secon_bestmatch = 0.05
 
 #this is for speech output
-n_counter_face_detection = 3 #systems needs to detect a learnt person 4 times in a row for successful recognition
+n_counter_face_detection = 3 #systems needs to detect a learnt person n times in a row for successful recognition
 name_detected_person = 'johndoe' #init name of detected person
 name_detected_person_primary = 'johndoe' #init name of detected person
 system_counter = 0 #number of frame in the script
@@ -179,7 +179,6 @@ while True:
                 unknown_person_name.append([dataset.idx_to_class[y] + "_" + str(counter)])
                 counter += 1
 
-
     #Calculate image embeddings
     #MTCNN will return images of faces all the same size,
     # enabling easy batch processing with the Resnet
@@ -215,15 +214,15 @@ while True:
         subdf_no_bestmatchperson = df.drop(labels=[best_match[0]], axis=0, inplace=False)
 
         best_match_value = df.min().values[0]
-        second_best_match_value = subdf_no_bestmatchperson.min().value[0]
+        second_best_match_value = subdf_no_bestmatchperson.min().values[0]
 
         #____increment entry in dictionary if face is detected AND if face is a REAL match____
-        #check is best_match passed threshhold and distance to second best match is big enought
+        #check is best_match passed threshhold and distance to second best match is big enough
         if (best_match_value < similarity_threshold and (second_best_match_value - best_match_value) > delta_first_secon_bestmatch):
             for element in known_people_unique:
                 if (element == best_match[0]):
                     known_people_unique[element] += 1
-                    print(known_people_unique[element] + "passed detection thershhold and delta to second best match (counter was increased)")
+                    print("[Debugging-Info] Passed detection threshold and delta to second best match (counter was increased)")
 
     #reset string including the name for speech output
     current_element_for_speech_output = ''
@@ -231,7 +230,7 @@ while True:
     #identify person if recognitions succeeded several times
     #----------------------------------------------------------------
     for element in known_people_unique:
-        if (known_people_unique[element] == n_counter_face_detection): #== not >= otherwise he will tell use several times
+        if (known_people_unique[element] == n_counter_face_detection): #== not >= otherwise he will tell use several times; might cause bug if two instances of the same person at the same time (should happen in reality)
             known_people_unique[element] += 1 #increment again otherwise it might stay at n_counter_face_detection multiple times!
             speech_output_face_recognition = True
             if (current_element_for_speech_output == ''): #case distinction: because if two people triggered at the same time then only one gets greeted
@@ -355,7 +354,6 @@ while True:
         emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #reset ringbuffer
 
     imgcounter += 1
-
 
 cap.release()
 cv.destroyAllWindows()
