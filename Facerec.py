@@ -34,8 +34,10 @@ import threading #asynchronous stuff
 CONST_BEAUTFUL_ASTERISK = 30 * "*"
 CONST_BEAUTIFUL_LINE = 30 * "-"
 
-#this is for speech output
 similarity_threshold = 1.0 #if less than this, then you assume it's a match
+delta_first_secon_bestmatch = 0.05
+
+#this is for speech output
 n_counter_face_detection = 3 #systems needs to detect a learnt person 4 times in a row for successful recognition
 name_detected_person = 'johndoe' #init name of detected person
 name_detected_person_primary = 'johndoe' #init name of detected person
@@ -209,11 +211,19 @@ while True:
         #    name_detected_person_primary_previous = name_detected_person_primary
         #    name_detected_person_primary = best_match[0]
 
-        #increment entry in dictionary if face is detected AND if face is a REAL match
-        if (df.min().values[0] < similarity_threshold):
+        #create df without the best matched person
+        subdf_no_bestmatchperson = df.drop(labels=[best_match[0]], axis=0, inplace=False)
+
+        best_match_value = df.min().values[0]
+        second_best_match_value = subdf_no_bestmatchperson.min().value[0]
+
+        #____increment entry in dictionary if face is detected AND if face is a REAL match____
+        #check is best_match passed threshhold and distance to second best match is big enought
+        if (best_match_value < similarity_threshold and (second_best_match_value - best_match_value) > delta_first_secon_bestmatch):
             for element in known_people_unique:
                 if (element == best_match[0]):
                     known_people_unique[element] += 1
+                    print(known_people_unique[element] + "passed detection thershhold and delta to second best match (counter was increased)")
 
     #reset string including the name for speech output
     current_element_for_speech_output = ''
