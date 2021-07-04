@@ -139,4 +139,7 @@ dmypy.json
 data/known_people/*
 !/data/known_people/.gitkeep
 
+images_to_detect/unknown_person/*
+!/images_to_detect/unknown_person/.gitkeep
+
 #if problems: https://stackoverflow.com/questions/25436312/gitignore-not-working
