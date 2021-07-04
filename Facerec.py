@@ -75,25 +75,15 @@ mtcnn = MTCNN(
     device=device
 )
 
-#checkpoint = torch.load(r'save\model.pt')
-
 #Define Inception Resnet V1 module
 #Set classify=True for pretrained classifier. For this example, we will use the model to output embeddings/CNN features. Note that for inference, it is important to set the model to eval mode.
 #See help(InceptionResnetV1) for more details.
 resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
-#resnet.load_state_dict(checkpoint['model_state_dict'])
-#resnet.eval()
-#num_classes = checkpoint['num_classes']
 
 #Define a dataset and data loader
 #We add the idx_to_class attribute to the dataset to enable easy recoding of label indices to identity names later one.
 def collate_fn(x):
     return x[0]
-
-#Load test data
-#dataset = datasets.ImageFolder(r'images_to_detect')
-#dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
-#loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
 
 #load known persons
 known_people_names_path = r'embeddings\names.txt'
@@ -104,8 +94,8 @@ with open(known_people_names_path, 'rb') as file:
         if v is None:
             known_people_unique[k] = 0 #init amount of names to 0
 
+# Time until are is increased/ until values for detected persons are resetted
 time_of_period = 10000.0
-#time_of_period = 10.0 #for debugging 10s
 counter_era = 0 #number of frame in the script
 
 #need this later for reset parameters regularly (like every hour etc.)
@@ -146,6 +136,8 @@ while True:
     imgcounter = 0
     face_analysis = False #init
     cv.imwrite(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter, frame) #save as image file
+    
+    # load dataset and loader form imagefolder
     dataset = datasets.ImageFolder(r'images_to_detect')
     dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
     loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
@@ -172,7 +164,8 @@ while True:
         print('\nFace(s) detected with probability:')
         print(prob)
         face_analysis = True #face detected, so do face_analysis
-
+        
+        #add detected faces to list of aligned list and unknow_person_name list
         for detected_face in x_aligned:
             if detected_face is not None:
                 list_of_aligned.append([detected_face])
@@ -197,12 +190,12 @@ while True:
 
         #Print distance matrix for classes
         dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
-
+        
+        #create data frame
         df = pd.DataFrame(dists, columns=unknown_person_name[counter], index=known_people)
         counter += 1
-
+        
         best_match = df.idxmin()
-        #print("Best match: " + best_match.unknown_person + counter)
         print("Best match: " + best_match[0])
 
         #for emotion detection only use the first/primary face
