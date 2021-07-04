@@ -172,7 +172,8 @@ while True:
         print('\nFace(s) detected with probability:')
         print(prob)
         face_analysis = True #face detected, so do face_analysis
-
+        
+        #add detected faces to list of aligned list and unknow_person_name list
         for detected_face in x_aligned:
             if detected_face is not None:
                 list_of_aligned.append([detected_face])
@@ -197,12 +198,12 @@ while True:
 
         #Print distance matrix for classes
         dists = [(element - unknown_embedding).norm().item() for element in learned_embeddings]
-
+        
+        #create data frame
         df = pd.DataFrame(dists, columns=unknown_person_name[counter], index=known_people)
         counter += 1
-
+        
         best_match = df.idxmin()
-        #print("Best match: " + best_match.unknown_person + counter)
         print("Best match: " + best_match[0])
 
         #for emotion detection only use the first/primary face
