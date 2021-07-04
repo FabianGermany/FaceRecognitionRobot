@@ -198,11 +198,6 @@ while True:
         best_match = df.idxmin()
         print("Best match: " + best_match[0])
 
-        #for emotion detection only use the first/primary face
-        #if(counter == 0):
-        #    name_detected_person_primary_previous = name_detected_person_primary
-        #    name_detected_person_primary = best_match[0]
-
         #create df without the best matched person
         subdf_no_bestmatchperson = df.drop(labels=[best_match[0]], axis=0, inplace=False)
 
@@ -272,20 +267,15 @@ while True:
             print(CONST_BEAUTIFUL_LINE)
             print("Face Analysis")
             print(CONST_BEAUTIFUL_LINE)
-
             print("\nEmotion: \n")
             print('\n'.join("{}: {} % ".format(k, v) for k, v in emotion_rounded.items()))
             print("--> Dominant Emotion: " + dominant_emotion)
-
             print("\nAge: ")
             print(age)
-
             print("\nGender: ")
             print(gender)
-
             print("\nEthnicity:  \n")
             print('\n'.join("{}: {} % ".format(k, v) for k, v in ethnicity_rounded.items()))
-
             print("\n")
 
 
