@@ -136,6 +136,8 @@ while True:
     imgcounter = 0
     face_analysis = False #init
     cv.imwrite(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter, frame) #save as image file
+    
+    # load dataset and loader form imagefolder
     dataset = datasets.ImageFolder(r'images_to_detect')
     dataset.idx_to_class = {i:c for c, i in dataset.class_to_idx.items()}
     loader = DataLoader(dataset, collate_fn=collate_fn, num_workers=workers)
