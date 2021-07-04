@@ -348,8 +348,9 @@ while True:
         #else: # (persisting_emotion == 'neutral'):
             #dont do anything
 
-        print(speech_output_phrase_face_analysis)
-        engine.say(speech_output_phrase_face_analysis)
+        if (persisting_emotion != 'neutral'): #don't say stuff if it's neutral 5 times in a row
+            print(speech_output_phrase_face_analysis)
+            engine.say(speech_output_phrase_face_analysis)
         speech_output_emotion_detection = False #reset
         emotion_ringbuffer.extend(['emotion1', 'emotion2', 'emotion3', 'emotion4', 'emotion5']) #reset ringbuffer
 
