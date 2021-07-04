@@ -156,8 +156,6 @@ while True:
         # check if aligned is empty -> no person in frame
         if x_aligned is None:
             print("There is no (known) person in frame")
-            # reset counter
-            # n_counter_internal = 0
             face_analysis = False #no face, then also no face analysis
             continue
 
