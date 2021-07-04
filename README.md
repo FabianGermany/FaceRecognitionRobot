@@ -2,7 +2,7 @@
 This university project features face detection, face recognition and face analysis including emotion detection for a robot, but can also be used locally on a computer.
 It also features a Text-to-Speech output. Furthermore it features multiple face detection.
 
-![preview](information/preview2.png)
+![preview](information/preview2.PNG)
 
 
 ## Instructions
