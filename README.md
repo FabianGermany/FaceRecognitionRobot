@@ -6,13 +6,16 @@ It also features a Text-to-Speech output. Furthermore it features multiple face 
 
 
 ## Instructions
-Learning procedure: If there are people that should be detected, simply add a new folder of their name and some pictures of them inside the folder "data/known_persons".
+Learning procedure: 
+If there are people that should be detected, 
+simply add a new folder of their name and some pictures of them inside the folder "data/known_persons".
 Everytime when the list of people is extended or changed, 
 run "Create_new_embeddings.py". 
+Make sure there are no umlauts used for the names.
 
 Run "Facerec.py" in order to run the detection program itself.
 
-For more information see project documentation file (.docx).
+For more information see project documentation file (.docx) which is not availabe here on GitHub.
 
 ## Installation
 Python 3.7.x is recommended (It works on 3.7.6 and 3.7.9 for sure). 
@@ -28,7 +31,8 @@ The required packages for facenet-pytorch and Deepface might conflict! Make sure
 
 With that combination it works. See more in requirements.txt.
 
-In case it still doesnt work, there is a dirty way replacing
+In case it still doesn't work, please read the error messages. 
+They might be an error that you can fix in a dirty way via replacing
 ```
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, PReLU, Flatten, Softmax
 from keras.models import Model
@@ -40,7 +44,7 @@ from tensorflow.keras.models import Model
 ```
 inside factory.py inside mtcnn folder.
 
-For the package pyttsx3 you need the version 2.6 or 2.9.0, newer versions might not work!
+For the package pyttsx3 you need the version 2.6 or 2.9.0, newer versions might not work.
 
 Please be aware of the fact that on the first run after installation, the algorithm will stuck once because it will download the deepface model after first usage by default.
 After this first start, it will run fluently again.
