@@ -216,7 +216,7 @@ while True:
     #identify person if recognitions succeeded several times
     #----------------------------------------------------------------
     for element in known_people_unique:
-        if (known_people_unique[element] == n_counter_face_detection): #== not >= otherwise he will tell use several times; might cause bug if two instances of the same person at the same time (should happen in reality)
+        if (known_people_unique[element] == n_counter_face_detection): #== not ">=" --> otherwise he will tell us several times; might cause bug if two instances of the same person at the same time (should not happen in reality though)
             known_people_unique[element] += 1 #increment again otherwise it might stay at n_counter_face_detection multiple times!
             speech_output_face_recognition = True
             if (current_element_for_speech_output == ''): #case distinction: because if two people triggered at the same time then only one gets greeted
