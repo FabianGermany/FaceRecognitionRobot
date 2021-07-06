@@ -234,7 +234,7 @@ while True:
         if((system_counter % 8) == 0): #only do every 8th time etc.
 
             # detect emotion and other parameters
-            img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter)
+            img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter) #is doing analysis with one person (which one?)
 
             emotion = img_analysis["emotion"]
             age = img_analysis["age"]
