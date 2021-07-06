@@ -63,3 +63,15 @@ If you want to get out images that look more normal to the human eye and not in 
 * `time_of_period`: time until values for detected people are resetted
 
 You may also adjust some (hyper)parameters of MTCNN and/or deepface.
+
+
+## License
+
+For this project we used several python libraries including:
+
+* facenet-pytorch: https://github.com/timesler/facenet-pytorch
+* MTCNN: https://github.com/ipazc/mtcnn
+* deepface: https://github.com/serengil/deepface
+* pyttsx3: https://github.com/nateshmbhat/pyttsx3
+
+Of course, we also use some typical packages such as Pandas, OpenCV etc.
