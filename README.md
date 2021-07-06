@@ -55,3 +55,11 @@ If you want to get out images that look more normal to the human eye and not in 
 
 ## Potential Extensions
 - ID Tracking (i.e. tracking after person turns around etc.) --> not necessary in first version since it's not trivial
+
+## Some parameters that can be finetuned for better results
+* `similarity_threshold` as threshold for triggering face recognition success
+* `delta_first_secon_bestmatch` as a value to make sure there is a sufficient difference between the best and the second best match (person)
+* `frequence_face_analysis`: activate face analysis on every n_th frame
+* `time_of_period`: time until values for detected people are resetted
+
+You may also adjust some (hyper)parameters of MTCNN and/or deepface.

@@ -35,7 +35,8 @@ CONST_BEAUTFUL_ASTERISK = 30 * "*"
 CONST_BEAUTIFUL_LINE = 30 * "-"
 
 similarity_threshold = 1.0 #if less than this, then you assume it's a match
-delta_first_secon_bestmatch = 0.05
+delta_first_secon_bestmatch = 0.05 #gap between best and second best match
+frequence_face_analysis = 8 #activate face analysis on every n_th frame
 
 #this is for speech output
 n_counter_face_detection = 3 #systems needs to detect a learnt person n times in a row for successful recognition
@@ -94,7 +95,7 @@ with open(known_people_names_path, 'rb') as file:
         if v is None:
             known_people_unique[k] = 0 #init amount of names to 0
 
-# Time until are is increased/ until values for detected persons are resetted
+# time until values for detected people are resetted
 time_of_period = 10000.0
 counter_era = 0 #number of frame in the script
 
@@ -231,7 +232,7 @@ while True:
         system_counter = system_counter + 1  # increment frame counter
 
         #dont do this every frame cause thats wasting a lot of resources
-        if((system_counter % 8) == 0): #only do every 8th time etc.
+        if((system_counter % frequence_face_analysis) == 0): #only do every 8th time etc.
 
             # detect emotion and other parameters
             img_analysis = DeepFace.analyze(r"images_to_detect\unknown_person\frame%d.jpg" %imgcounter) #is doing analysis with one person (which one?)
